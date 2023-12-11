@@ -32,7 +32,7 @@ analysis_sale_by_year_query = "SELECT rok::integer, miesiac::integer, COUNT(id_u
                               "GROUP BY rok, miesiac " \
                               "ORDER BY rok, miesiac"
 
-def make_experiment_prediction(dbconnect, query):
+def make_experiment_prediction(query):
     """Eksperyment predykcji
        Parametr n_init określa liczbę uruchomień algorytmu z różnymi początkowymi środkami skupień"""
     warnings.filterwarnings('ignore')
