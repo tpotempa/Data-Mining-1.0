@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as hierarchy
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering
 from sklearn_extra.cluster import KMedoids
 from sklearn.metrics import silhouette_score
 from yellowbrick.cluster import SilhouetteVisualizer, KElbowVisualizer, InterclusterDistance
-from sklearn.cluster import AgglomerativeClustering
 
 
 def normalize(df):
@@ -33,7 +33,7 @@ def central_clustering(k, df, algorithm="kmeans", n_init=25):
        Parametr k określa liczbę skupień
        Parametr df określa zbiór danych w formie ramki danych
        Parametr algorithm określa algorytm grupowania środkowego
-       Parametr n_init określa liczbę uruchomień algorytmu z różnymi początkowymi środkami skupień """
+       Parametr n_init określa liczbę uruchomień algorytmu z różnymi początkowymi środkami skupień"""
 
     if algorithm == "kmedoids":
         model = KMedoids(init="random", n_clusters=k)
