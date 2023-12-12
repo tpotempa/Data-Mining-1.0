@@ -40,6 +40,10 @@ def make_experiment_prediction(query):
     df = pd.DataFrame(rs, columns=["rok", "miesiac", "liczba", "wartosc"])
     print(df, os.linesep)
 
+    # Wykres punktowy kompletnego zbioru pobranych danych
+    visualize_plot_scatter(x_plot=None, y_plot=None, x_scatter=df.iloc[:, 2], y_scatter=df.iloc[:, 3],
+                           title=title, xlabel=xlabel, ylabel=ylabel)
+
     # Utworzenie i wyświetlenie początkowych danych ZBIÓR UCZĄCEGO
     df_train = df[df.rok <= 2016]
     print(df_train.head, os.linesep)
@@ -47,10 +51,6 @@ def make_experiment_prediction(query):
     # Utworzenie i wyświetlenie początkowych danych ZBIÓR TESTOWEGO
     df_test = df[df.rok > 2016]
     print(df_test.head, os.linesep)
-
-    # Wykres punktowy wszystkich danych
-    visualize_plot_scatter(x_plot=None, y_plot=None, x_scatter=df.iloc[:, 2], y_scatter=df.iloc[:, 3],
-                           title=title, xlabel=xlabel, ylabel=ylabel)
 
     # Wykres punktowy z oznaczeniem lat ZBIÓR UCZĄCY
     visualize(df=df_train, x="liczba", y="wartosc", title="Sprzedaż usług 2008-2016 {Zbiór UCZĄCY}", grouping="rok")
