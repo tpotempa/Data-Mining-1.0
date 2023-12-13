@@ -25,7 +25,7 @@ def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_i
        Parametr algorithm określa algorytm grupowania {kmeans, kmedoids}
        Parametr number_of_clusters określa liczbę skupień/grup {2, 3, ..., n}
        Parametr n_init określa liczbę uruchomień algorytmu z różnymi początkowymi środkami skupień"""
-    warnings.filterwarnings('ignore')
+    warnings.filterwarnings("ignore")
 
     rs = connect(query)
 
@@ -57,7 +57,7 @@ def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_m
     """Eksperyment grupowania
        Parametr number_of_clusters określa liczbę skupień/grup {2, 3, ..., n}
        Parametr method określa miarę odelgłości między skupieniami {single, complete, average, ward}"""
-    warnings.filterwarnings('ignore')
+    warnings.filterwarnings("ignore")
 
     rs = connect(query)
 
