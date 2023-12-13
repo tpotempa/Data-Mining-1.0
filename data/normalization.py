@@ -7,7 +7,6 @@ __copyright__ = "Katedra Informatyki"
 __version__ = "1.0.0"
 
 from sklearn.preprocessing import StandardScaler
-import pandas as pd
 
 
 def normalize(df):
