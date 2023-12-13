@@ -6,6 +6,7 @@ __version__ = "1.4.0"
 
 from data.mining.descriptive import *
 from data.datasources import *
+from data.normalization import *
 import pandas as pd
 import warnings
 import os

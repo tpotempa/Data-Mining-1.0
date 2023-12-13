@@ -7,20 +7,12 @@ __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
 __version__ = "1.2.0"
 
-from sklearn.preprocessing import StandardScaler
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 # from scipy import stats
-
-
-def normalize(df):
-    """Normalizacja danych z wykorzystaniem standaryzacji statystycznej"""
-
-    scaler = StandardScaler()
-    return scaler.fit_transform(df)
 
 
 def visualize(df, title, x, y, regression=False, grouping=None):
