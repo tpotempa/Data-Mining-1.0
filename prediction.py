@@ -197,7 +197,10 @@ def make_experiment_forecast(query):
     visualize_prophet(model, forecast, xlabel, ylabel)
 
     # Walidacja krzyżowa
-    df_cv, df_metrics = model_cross_validation(model, test_period=365, training_period=2, period=2)
+    model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
+                    seasonality_mode="additive")
+    model.fit(df_without_outliers)
+    df_cv, df_metrics = model_cross_validation(model, test_period=365, training_period=2, period=0.1)
     print(df_cv.head)
     print(df_metrics)
 

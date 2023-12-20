@@ -128,7 +128,7 @@ def sunday(ds):
 def model_cross_validation(model, test_period, training_period=3, period=0.5):
     """Walidacja krzyżowa
        Parametr horizon to okres testowy.
-       Parametr training_period to inicjalny tj. początkowy okres uczący.
+       Parametr training_period to minimalny inicjalny tj. początkowy okres uczący.
        Parametr period to odległości między punktami odcięcia dat."""
 
     initial = str(training_period*test_period) + ' days'
