@@ -1,17 +1,20 @@
 """Eksploracja danych >> Odkrywanie predykcyjne
    Wymagane pakiety:
    pip install scikit-learn
-   pip install seaborn"""
+   pip install seaborn
+   pip install prophet"""
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
-__version__ = "1.2.0"
+__version__ = "1.4.0"
 
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from prophet.diagnostics import cross_validation, performance_metrics
+from prophet.plot import plot_cross_validation_metric
 # from scipy import stats
 
 
@@ -28,17 +31,46 @@ def visualize(df, title, x, y, regression=False, grouping=None):
     figure.suptitle(title)
 
 
+def visualize_prophet(model, df, xlabel, ylabel, title="None"):
+    """Tworzenie wykresów.
+       Parametr df to dane w formie ramki danych."""
+
+    model.plot(df)
+    plt.xlabel(xlabel, fontsize="10")
+    plt.ylabel(ylabel, fontsize="10")
+    plt.title(title, fontsize="10")
+    plt.legend(['Aktualna', 'Prognoza', 'Przedział niepewności'])
+    plt.show()
+
+    model.plot_components(df)
+    plt.show()
+
+
+def visualize_plot(x: object, y: object, title=None, xlabel="x", ylabel="y", color=None):
+    """Tworzenie wykresów."""
+
+    visualize_plot_scatter(x_plot=x, y_plot=y, x_scatter=None, y_scatter=None,
+                           title=title, xlabel=xlabel, ylabel=ylabel, plot_color=color, scatter_color=None)
+
+
+def visualize_scatter(x: object, y: object, title=None, xlabel="x", ylabel="y", color=None):
+    """Tworzenie wykresów."""
+
+    visualize_plot_scatter(x_plot=None, y_plot=None, x_scatter=x, y_scatter=y,
+                           title=title, xlabel=xlabel, ylabel=ylabel, plot_color=None, scatter_color=color)
+
+
 def visualize_plot_scatter(x_plot: object, y_plot: object, x_scatter: object, y_scatter: object,
-                           title: object, xlabel, ylabel):
+                           title=None, xlabel="x", ylabel="y", plot_color=None, scatter_color=None):
     """Tworzenie wykresów."""
 
     plt.figure(figsize=(15, 10))
     if x_plot is not None and y_plot is not None:
-        plt.plot(x_plot, y_plot, color="orange", linewidth=1)
+        plt.plot(x_plot, y_plot, color=plot_color, linewidth=1)
     if x_scatter is not None and y_scatter is not None:
-        plt.scatter(x=x_scatter, y=y_scatter, color="green", marker="o")
-    plt.xlabel(xlabel, fontsize="12", horizontalalignment="center")
-    plt.ylabel(ylabel, fontsize="12", horizontalalignment="center")
+        plt.scatter(x=x_scatter, y=y_scatter, color=scatter_color, marker="o")
+    plt.xlabel(xlabel, fontsize="10", horizontalalignment="center")
+    plt.ylabel(ylabel, fontsize="10", horizontalalignment="center")
     plt.title(title)
     plt.show()
 
@@ -83,3 +115,32 @@ def prediction(model, x_test, y_test):
     description = pd.DataFrame(data=values, columns=["", ""])
 
     return df_prediction, description
+
+
+def sunday(ds):
+    date = pd.to_datetime(ds)
+    if date.weekday() == 6:
+        return 1
+    else:
+        return 0
+
+
+def model_cross_validation(model, test_period, training_period=3, period=0.5):
+    """Walidacja krzyżowa
+       Parametr horizon to okres testowy.
+       Parametr training_period to inicjalny tj. początkowy okres uczący.
+       Parametr period to odległości między punktami odcięcia dat."""
+
+    initial = str(training_period*test_period) + ' days'
+    period = str(period*test_period) + ' days'
+    horizon = str(test_period) + ' days'
+    print
+
+    df_cv = cross_validation(model, initial=initial, period=period, horizon=horizon, parallel='processes')
+    df_metrics = performance_metrics(df_cv)
+
+    # Metryki: mse, rmse, mae, mape, coverage
+    plot_cross_validation_metric(df_cv, metric='rmse')
+    plt.show()
+
+    return df_cv, df_metrics
