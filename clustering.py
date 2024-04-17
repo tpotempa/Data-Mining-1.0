@@ -12,12 +12,12 @@ import warnings
 import os
 
 """Zapytanie do analizy sprzedaży wg województw"""
-analysis_sale_by_region_query = "SELECT wojewodztwo, COUNT(id_uslugi)::integer AS liczba, SUM(cena)::integer AS wartosc " \
+analysis_sale_by_region_query = "SELECT region, COUNT(id_uslugi)::integer AS liczba, SUM(cena)::integer AS wartosc " \
                                 "FROM poczta_olap.sprzedaz NATURAL JOIN poczta_olap.nadawca " \
                                 "INNER JOIN poczta_olap.czas ON czas.id_czasu = sprzedaz.id_czasu_nadania " \
                                 "WHERE rok = 2019 " \
-                                "GROUP BY wojewodztwo " \
-                                "ORDER BY wojewodztwo"
+                                "GROUP BY region " \
+                                "ORDER BY region"
 
 
 def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_init=25):
@@ -84,5 +84,5 @@ def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_m
 
 """Uruchamienie eksperymentów"""
 # make_experiment_central_clustering("kmedoids", 4, analysis_sale_by_region_query)
-# make_experiment_central_clustering("kmeans", 4, analysis_sale_by_region_query)
-make_experiment_hierarchical_clustering(3, analysis_sale_by_region_query, "ward", metric="euclidean")
+make_experiment_central_clustering("kmeans", 4, analysis_sale_by_region_query)
+# make_experiment_hierarchical_clustering(3, analysis_sale_by_region_query, "ward", metric="euclidean")
