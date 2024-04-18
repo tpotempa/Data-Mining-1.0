@@ -2,7 +2,7 @@
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 from data.mining.descriptive import *
 from data.datasources import *
@@ -19,6 +19,12 @@ analysis_sale_by_region_query = "SELECT region, COUNT(id_uslugi)::integer AS lic
                                 "GROUP BY region " \
                                 "ORDER BY region"
 
+analysis_sale_by_nadawca_query = "SELECT imie || ' ' || nazwisko AS nadawca, " \
+                                       "EXTRACT(YEAR FROM data_urodzenia)::integer AS rok,  SUM(cena)::integer AS wartosc " \
+                                       "FROM poczta_olap.sprzedaz NATURAL JOIN poczta_olap.nadawca " \
+                                       "NATURAL JOIN poczta_olap.usluga " \
+                                       "GROUP BY 1, 2 "\
+                                       "ORDER BY 1, 2"
 
 def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_init=25):
     """Eksperyment grupowania algorytmami środkowymi
@@ -29,13 +35,17 @@ def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_i
 
     rs = connect(query)
 
-    df = pd.DataFrame(data=rs, columns=["wojewodztwo", "liczba", "wartosc"])
-    df = df.set_index("wojewodztwo")
+    #df = pd.DataFrame(data=rs, columns=["wojewodztwo", "liczba", "wartosc"])
+    #df = df.set_index("wojewodztwo")
+    df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "wartosc"])
+    df = df.set_index("nadawca")
     print(df, os.linesep)
 
     scaled = normalize(df)
-    df_scaled = pd.DataFrame(data={"wojewodztwo": df.index.values, "liczba": scaled[:, 0], "wartosc": scaled[:, 1]})
+    #df_scaled = pd.DataFrame(data={"wojewodztwo": df.index.values, "liczba": scaled[:, 0], "wartosc": scaled[:, 1]})
+    df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "wartosc": scaled[:, 1]})
     print(df_scaled, os.linesep)
+
 
     model, df_grouped, d = central_clustering(number_of_clusters, df_scaled, algorithm, n_init)
     print(d, os.linesep)
@@ -84,5 +94,6 @@ def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_m
 
 """Uruchamienie eksperymentów"""
 # make_experiment_central_clustering("kmedoids", 4, analysis_sale_by_region_query)
-make_experiment_central_clustering("kmeans", 4, analysis_sale_by_region_query)
+make_experiment_central_clustering("kmeans", 3, analysis_sale_by_nadawca_query)
+#make_experiment_central_clustering("kmeans", 3, analysis_sale_by_region_query)
 # make_experiment_hierarchical_clustering(3, analysis_sale_by_region_query, "ward", metric="euclidean")

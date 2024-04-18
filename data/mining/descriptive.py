@@ -8,7 +8,7 @@
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -66,19 +66,20 @@ def visualize(model, df_grouped):
     colors = ["blue", "orange", "red", "green", "magenta", ]
 
     # Wyznaczenie środków skupień tj. centroidów albo medoidów oraz tworzenie wykresu
+    # UWAGA: Wykres SCATTER wizualizuje tylko dwie cechy
     centers = model.cluster_centers_
     plt.figure(figsize=(15, 10))
     plt.title("Grouping plot with marked cluster centers")
     for i in range(model.n_clusters):
         cluster = df_grouped[df_grouped.grupa == i]
-        plt.scatter(cluster["liczba"], cluster["wartosc"], color=colors[i])
+        plt.scatter(cluster.iloc[:, 1], cluster.iloc[:, 2], color=colors[i])
     plt.scatter(centers[:, 0], centers[:, 1], color="grey", s=160, marker="x")
     plt.show()
 
     # Tworzenie zarysu
     plt.figure(figsize=(15, 10))
     sv = SilhouetteVisualizer(model)
-    sv.fit(df_grouped.iloc[0:, 1:3].to_numpy())
+    sv.fit(df_grouped.iloc[0:, 1:-1].to_numpy())
     sv.show()
 
     # Tworzenie map odległości międzyskupieniowych

@@ -5,11 +5,10 @@
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 import psycopg2 as db
 from decouple import config
-
 
 """Dane połączenia z bazą danych na serwerze Katedry Informatyki"""
 HOST = config("DB_HOST")
