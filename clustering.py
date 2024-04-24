@@ -26,19 +26,18 @@ analysis_purchase_by_sender_query = "SELECT imie || ' ' || nazwisko AS nadawca, 
                                     "GROUP BY 1, 2 " \
                                     "ORDER BY 1, 2"
 
-analysis_purchase_by_sender_query = "SELECT imie || ' ' || nazwisko AS nadawca, " \
-                                    "EXTRACT(YEAR FROM data_urodzenia)::integer AS rok,  " \
-                                    "CASE plec " \
-                                    "WHEN 'M' THEN 1 " \
-                                    "WHEN 'K' THEN 2 " \
-                                    "ELSE NULL " \
-                                    "END AS plec, " \
-                                    "COUNT(cena)::integer AS liczba, " \
-                                    "SUM(cena)::integer AS wartosc " \
-                                    "FROM poczta_olap.sprzedaz NATURAL JOIN poczta_olap.nadawca " \
-                                    "NATURAL JOIN poczta_olap.usluga " \
-                                    "GROUP BY 1, 2, 3" \
-                                    "ORDER BY 1, 2, 3"
+analysis_purchase_by_sender_sex_query = "SELECT imie || ' ' || nazwisko AS nadawca, " \
+                                        "EXTRACT(YEAR FROM data_urodzenia)::integer AS rok,  " \
+                                        "CASE plec " \
+                                        "WHEN 'M' THEN 1 " \
+                                        "WHEN 'K' THEN 2 " \
+                                        "ELSE NULL " \
+                                        "END AS plec, " \
+                                        "SUM(cena)::integer AS wartosc " \
+                                        "FROM poczta_olap.sprzedaz NATURAL JOIN poczta_olap.nadawca " \
+                                        "NATURAL JOIN poczta_olap.usluga " \
+                                        "GROUP BY 1, 2, 3" \
+                                        "ORDER BY 1, 2, 3"
 
 
 def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_init=25):
@@ -111,5 +110,6 @@ def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_m
 
 """Uruchamienie eksperymentów"""
 #make_experiment_central_clustering("kmedoids", 3, analysis_sale_by_region_query)
-make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_query)
+make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_sex_query)
+#make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_query)
 # make_experiment_hierarchical_clustering(3, analysis_sale_by_region_query, "ward", metric="euclidean")
