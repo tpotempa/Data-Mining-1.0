@@ -53,14 +53,14 @@ def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_i
     #df = df.set_index("wojewodztwo")
     #df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "wartosc"])
     #df = df.set_index("nadawca")
-    df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "plec", "liczba", "wartosc"])
+    df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "plec", "wartosc"])
     df = df.set_index("nadawca")
     print(df, os.linesep)
 
     scaled = normalize(df)
     #df_scaled = pd.DataFrame(data={"wojewodztwo": df.index.values, "liczba": scaled[:, 0], "wartosc": scaled[:, 1]})
     #df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "wartosc": scaled[:, 1]})
-    df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "plec": scaled[:, 1], "liczba": scaled[:, 2], "wartosc": scaled[:, 3]})
+    df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "plec": scaled[:, 1], "wartosc": scaled[:, 2]})
     print(df_scaled, os.linesep)
 
     model, df_grouped, d = central_clustering(number_of_clusters, df_scaled, algorithm, n_init)
@@ -110,6 +110,6 @@ def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_m
 
 """Uruchamienie eksperymentów"""
 #make_experiment_central_clustering("kmedoids", 3, analysis_sale_by_region_query)
-make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_sex_query)
 #make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_query)
+make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_sex_query)
 # make_experiment_hierarchical_clustering(3, analysis_sale_by_region_query, "ward", metric="euclidean")
