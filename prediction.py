@@ -9,7 +9,7 @@
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 from data.mining.predictive import *
 from data.datasources import *
