@@ -23,8 +23,10 @@ def connect(query, host=HOST, port=PORT, database=DATABASE, user=USER, password=
 
     con = db.connect(host=host, port=port, database=database, user=user, password=password)
 
-    # Utworzenie kursora i wykonanie zapytania
+    # Utworzenie kursora
     cursor = con.cursor()
+
+    # Wykonanie zapytania
     cursor.execute(query)
 
     # Odczytanie wyników zapytania do kolekcji w formie listy krotek

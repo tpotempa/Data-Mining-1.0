@@ -1,4 +1,4 @@
-"""Eksploracja danych >> Odkrywanie deskrypcyjne >>> Grupowanie"""
+"""Eksploracja danych >> Odkrywanie deskrypcyjne >>> Analiza skupień"""
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
@@ -41,9 +41,9 @@ analysis_purchase_by_sender_sex_query = "SELECT imie || ' ' || nazwisko AS nadaw
 
 
 def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_init=25):
-    """Eksperyment grupowania algorytmami środkowymi
-       Parametr algorithm określa algorytm grupowania {kmeans, kmedoids}
-       Parametr number_of_clusters określa liczbę skupień/grup {2, 3, ..., n}
+    """Eksperyment analizy skupień algorytmami środkowymi
+       Parametr algorithm określa algorytm analizy skupień {kmeans, kmedoids}
+       Parametr number_of_clusters określa liczbę skupień {2, 3, ..., n}
        Parametr n_init określa liczbę uruchomień algorytmu z różnymi początkowymi środkami skupień"""
     warnings.filterwarnings("ignore")
 
@@ -51,16 +51,16 @@ def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_i
 
     #df = pd.DataFrame(data=rs, columns=["wojewodztwo", "liczba", "wartosc"])
     #df = df.set_index("wojewodztwo")
-    #df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "wartosc"])
-    #df = df.set_index("nadawca")
-    df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "plec", "wartosc"])
+    df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "wartosc"])
     df = df.set_index("nadawca")
+    #df = pd.DataFrame(data=rs, columns=["nadawca", "rok", "plec", "wartosc"])
+    #df = df.set_index("nadawca")
     print(df, os.linesep)
 
     scaled = normalize(df)
     #df_scaled = pd.DataFrame(data={"wojewodztwo": df.index.values, "liczba": scaled[:, 0], "wartosc": scaled[:, 1]})
-    #df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "wartosc": scaled[:, 1]})
-    df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "plec": scaled[:, 1], "wartosc": scaled[:, 2]})
+    df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "wartosc": scaled[:, 1]})
+    #df_scaled = pd.DataFrame(data={"nadawca": df.index.values, "rok": scaled[:, 0], "plec": scaled[:, 1], "wartosc": scaled[:, 2]})
     print(df_scaled, os.linesep)
 
     model, df_grouped, d = central_clustering(number_of_clusters, df_scaled, algorithm, n_init)
@@ -81,8 +81,8 @@ def make_experiment_central_clustering(algorithm, number_of_clusters, query, n_i
 
 def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_method, metric):
     """Eksperyment grupowania
-       Parametr number_of_clusters określa liczbę skupień/grup {2, 3, ..., n}
-       Parametr method określa miarę odelgłości między skupieniami {single, complete, average, ward}"""
+       Parametr number_of_clusters określa liczbę skupień {2, 3, ..., n}
+       Parametr method określa miarę odległości między skupieniami {single, complete, average, ward}"""
     warnings.filterwarnings("ignore")
 
     rs = connect(query)
@@ -109,7 +109,7 @@ def make_experiment_hierarchical_clustering(number_of_clusters, query, linkage_m
 
 
 """Uruchamienie eksperymentów"""
-#make_experiment_central_clustering("kmedoids", 3, analysis_sale_by_region_query)
-#make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_query)
-make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_sex_query)
-# make_experiment_hierarchical_clustering(3, analysis_sale_by_region_query, "ward", metric="euclidean")
+#make_experiment_central_clustering("kmedoids", 3, analysis_purchase_by_sender_query)
+#make_experiment_central_clustering("kmeans", 3, analysis_purchase_by_sender_query)
+#make_experiment_central_clustering("kmeans", 5, analysis_purchase_by_sender_sex_query)
+make_experiment_hierarchical_clustering(3, analysis_purchase_by_sender_query, "ward", metric="euclidean")

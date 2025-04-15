@@ -24,22 +24,12 @@ import warnings
 import os
 
 """Zapytanie do analizy sprzedaży wg lat"""
-analysis_sale_by_year_query = "SELECT rok::integer, miesiac::integer, COUNT(id_uslugi)::integer AS liczba, SUM(cena)::integer AS wartosc " \
+analysis_sale_by_year_query = "SELECT rok, miesiac, CAST(COUNT(id_uslugi) AS integer) AS liczba, CAST(SUM(cena) AS integer) AS wartosc " \
                               "FROM poczta_olap.sprzedaz NATURAL JOIN poczta_olap.nadawca " \
                               "INNER JOIN poczta_olap.czas ON czas.id_czasu = sprzedaz.id_czasu_nadania " \
                               "WHERE rok BETWEEN 2008 AND 2019 " \
                               "GROUP BY rok, miesiac " \
                               "ORDER BY rok, miesiac"
-
-"""Zapytanie do analizy sprzedaży wg dni"""
-analysis_sale_by_date_query = "SELECT make_date(rok::integer, miesiac::integer, dzien::integer) AS data, " \
-                              "COUNT(id_uslugi)::integer AS liczba, SUM(cena)::integer AS wartosc " \
-                              "FROM poczta_olap.sprzedaz NATURAL JOIN poczta_olap.nadawca " \
-                              "INNER JOIN poczta_olap.czas ON czas.id_czasu = sprzedaz.id_czasu_nadania " \
-                              "WHERE rok BETWEEN 2016 AND 2019 " \
-                              "GROUP BY 1 " \
-                              "ORDER BY 1"
-
 
 def make_experiment_prediction(query):
     """Eksperyment predykcji"""
@@ -118,93 +108,5 @@ def make_experiment_prediction(query):
                            title=chart_title, xlabel=xlabel, ylabel=ylabel, plot_color="orange", scatter_color="green")
 
 
-def make_experiment_forecast(query):
-    """Eksperyment prognozowania"""
-    warnings.filterwarnings("ignore")
-
-    rs = connect(query)
-
-    # Utworzenie ramki danych
-    # Wymagane jest aby ramka danych składała się z dwóch kolumn ds oraz y.
-    # Kolumna ds tj. datestamp winna być datą w formacie YYYY-MM-DD albo YYYY-MM-DD HH:MM:SS.
-    # Kolumna y winna być liczbą.
-    df = pd.DataFrame(rs, columns=["ds", "y", "regressor"])
-    print(df, os.linesep)
-
-    x = "ds"
-    y = "y"
-    xlabel = "Dzień"
-    ylabel = "Liczba usług"
-    title = "Sprzedaż usług"
-
-    # Wizualizacja zbioru danych
-    visualize_scatter(x=df[x], y=df[y], title=title, xlabel=xlabel, ylabel=ylabel)
-    visualize_plot(x=df[x], y=df[y], title=title, xlabel=xlabel, ylabel=ylabel)
-
-    # Eliminacja wartości odstających w oparciu o odchylenie standardowe
-    sd_count = 3
-    df_without_outliers = df[(np.abs(stats.zscore(df[y])) < sd_count)]
-
-    # Wizualizacja zmodyfikowanego zbioru danych
-    visualize_scatter(x=df_without_outliers[x], y=df_without_outliers[y], title=title, xlabel=xlabel, ylabel=ylabel)
-    visualize_plot(x=df_without_outliers[x], y=df_without_outliers[y], title=title, xlabel=xlabel, ylabel=ylabel)
-
-    # Utworzenie i wyświetlenie początkowych danych ZBIORU UCZĄCEGO
-    df_train = df_without_outliers[df_without_outliers.ds <= dt.datetime.strptime("20181231", "%Y%m%d").date()]
-    print(df_train.head, os.linesep)
-
-    # Utworzenie i wyświetlenie początkowych danych ZBIORU TESTOWEGO
-    df_test = df_without_outliers[df_without_outliers.ds > dt.datetime.strptime("20181231", "%Y%m%d").date()]
-    print(df_test.head, os.linesep)
-
-    print("Rozmiar ZBIORU UCZĄCEGO: ", df_train.loc[:, y].count() / df.loc[:, y].count())
-    print("Rozmiar ZBIORU TESTOWEGO: ", df_test.loc[:, y].count() / df.loc[:, y].count(), os.linesep)
-
-    # Utworzenie modelu prognozowania z wykorzystaniem algorytmu PROPHET
-    model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
-                    seasonality_mode="additive")
-
-    # Dodanie regresora do modelu oraz wartości regresora do zbioru uczącego
-    # df_train["niedziela"] = df_train["ds"].apply(sunday)
-    # model.add_regressor("niedziela")
-
-    # Uczenie modelu
-    model.fit(df_train)
-
-    # Utworzenie ramki danych dla okresu przyszłego tj. 1 roku
-    periods = 365
-    future = model.make_future_dataframe(periods=periods)
-
-    # Dodanie wartości regresora do okresu przyszłego
-    # future["niedziela"] = future["ds"].apply(sunday)
-
-    # Prognozowanie dla okresu przyszłego
-    forecast = model.predict(future)
-
-    # Kolumny ramki danych z prognozą
-    print(forecast.columns.values.tolist(), os.linesep)
-
-    print("Rezultat prognozowania:")
-    print(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail(), os.linesep)
-
-    # Ocena prognozowania
-    predictions = forecast.iloc[-len(df_test):]["yhat"]
-    actuals = df_test["y"]
-    rms_error = round(rmse(predictions, actuals), 4)
-    print("RMSE:", rms_error)
-
-    # Wizualizacja prognozy i komponentów modelu
-    visualize_prophet(model, forecast, xlabel, ylabel)
-
-    # Walidacja krzyżowa
-    model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
-                    seasonality_mode="additive")
-    model.fit(df_without_outliers)
-    df_cv, df_metrics = model_cross_validation(model, test_period=365, training_period=2, period=0.1)
-    print(df_cv.head)
-    print(df_metrics)
-
-
 """Uruchamienie eksperymentów"""
-# make_experiment_prediction(analysis_sale_by_year_query)
-make_experiment_forecast(analysis_sale_by_date_query)
+make_experiment_prediction(analysis_sale_by_year_query)
