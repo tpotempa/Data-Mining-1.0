@@ -135,7 +135,8 @@ def model_cross_validation(model, test_period, training_period=3, period=0.5):
     period = str(period*test_period) + ' days'
     horizon = str(test_period) + ' days'
 
-    df_cv = cross_validation(model, initial=initial, period=period, horizon=horizon, parallel='processes')
+    #df_cv = cross_validation(model, initial=initial, period=period, horizon=horizon, parallel='processes')
+    df_cv = cross_validation(model, initial=initial, period=period, horizon=horizon, parallel='threads')
     df_metrics = performance_metrics(df_cv)
 
     # Metryki: mse, rmse, mae, mape, coverage
