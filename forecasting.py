@@ -10,7 +10,7 @@
 
 __author__ = "Tomasz Potempa"
 __copyright__ = "Katedra Informatyki"
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 
 from data.mining.predictive import *
 from data.datasources import *
@@ -32,6 +32,11 @@ sales_volumen_by_date_query = "SELECT data, liczba " \
 sales_value_by_date_query = "SELECT data, wartosc " \
                             "FROM poczta_olap.sprzedaz_wg_dni_v";
 
+"""Zapytanie do analizy wolumenu tj. liczby sprzedaży wg dat filtrowane wg regionów"""
+sales_volumen_by_date_filtered_by_region_query = "SELECT data, liczba " \
+                                                 "FROM poczta_olap.sprzedaz_wg_dni_regionow_v " \
+                                                 "WHERE region = 'dolnośląskie'";
+
 
 def make_experiment_forecast(query):
     """Eksperyment prognozowania"""
@@ -45,6 +50,7 @@ def make_experiment_forecast(query):
     # Kolumna y winna być liczbą.
     df = pd.DataFrame(rs, columns=["ds", "y"])
     df["regressor"] = None
+    print(f"Rozmiar zbioru OBSERWACJI: {len(df)}")
     print(df, os.linesep)
 
     x = "ds"
@@ -57,24 +63,37 @@ def make_experiment_forecast(query):
     visualize_scatter(x=df[x], y=df[y], title=title, xlabel=xlabel, ylabel=ylabel)
     visualize_plot(x=df[x], y=df[y], title=title, xlabel=xlabel, ylabel=ylabel)
 
-    # Eliminacja wartości odstających w oparciu o odchylenie standardowe
-    sd_count = 3
-    df_without_outliers = df[(np.abs(stats.zscore(df[y])) < sd_count)]
+    """ Eliminacja wartości odstających w oparciu o:
+    * liczbę odchyleń standardowych
+    * rozmiar okna przesuwnego wyrażonego w dniach dla którego obliczany jest Z-SCORE"""
+    sd_count = 1
+    window_size = 15
+    df_outliers = pd.DataFrame(columns=df.columns)
+
+    for i in range(0, len(df) - window_size + 1, 1):
+        df_window = df.iloc[i:i + window_size]
+        df_outliers = pd.concat([df_outliers, df_window[(np.abs(stats.zscore(df_window[y])) >= sd_count)]], ignore_index=True).drop_duplicates(keep=False)
+    print(f"Rozmiar zbioru OBSERWACJI ODSTAJĄCYCH: {len(df_outliers)}")
+    print("df_outliers: ", df_outliers, os.linesep)
+
+    df_without_outliers = df[~df.set_index(["ds", "y"]).index.isin(df_outliers.set_index(["ds", "y"]).index)]
+    print(f"Rozmiar zbioru OBSERWACJI NIEODSTAJĄCYCH: {len(df_without_outliers)}")
+    print("df_without_outliers: ", df_without_outliers, os.linesep)
 
     # Wizualizacja zmodyfikowanego zbioru danych
     visualize_scatter(x=df_without_outliers[x], y=df_without_outliers[y], title=title, xlabel=xlabel, ylabel=ylabel)
     visualize_plot(x=df_without_outliers[x], y=df_without_outliers[y], title=title, xlabel=xlabel, ylabel=ylabel)
 
     # Utworzenie i wyświetlenie początkowych danych ZBIORU UCZĄCEGO
-    df_train = df_without_outliers[df_without_outliers.ds <= dt.datetime.strptime("20191231", "%Y%m%d").date()]
+    df_train = df_without_outliers[df_without_outliers.ds <= dt.datetime.strptime("20191231", "%Y%m%d").date()].reset_index(drop=True)
     print("ZBIÓR UCZĄCY: ", df_train.head, os.linesep)
 
     # Utworzenie i wyświetlenie początkowych danych ZBIORU TESTOWEGO
-    df_test = df_without_outliers[df_without_outliers.ds > dt.datetime.strptime("20191231", "%Y%m%d").date()]
+    df_test = df_without_outliers[df_without_outliers.ds > dt.datetime.strptime("20191231", "%Y%m%d").date()].reset_index(drop=True)
     print("ZBIÓR TESTOWY: ", df_test.head, os.linesep)
 
-    print("Rozmiar ZBIORU UCZĄCEGO: ", df_train.loc[:, y].count() / df.loc[:, y].count())
-    print("Rozmiar ZBIORU TESTOWEGO: ", df_test.loc[:, y].count() / df.loc[:, y].count(), os.linesep)
+    print("Rozmiar ZBIORU UCZĄCEGO: ", df_train.loc[:, y].count() / df_without_outliers.loc[:, y].count())
+    print("Rozmiar ZBIORU TESTOWEGO: ", df_test.loc[:, y].count() / df_without_outliers.loc[:, y].count(), os.linesep)
 
     # Utworzenie modelu prognozowania z wykorzystaniem algorytmu PROPHET
     model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
@@ -101,11 +120,12 @@ def make_experiment_forecast(query):
     print(forecast.columns.values.tolist(), os.linesep)
 
     print("Rezultat prognozowania:")
-    print(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].tail(), os.linesep)
+    print(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].head(), os.linesep)
 
     # Ocena prognozowania
-    predictions = forecast.iloc[-len(df_test):]["yhat"]
-    actuals = df_test["y"]
+    print("Ocena prognozowania:")
+    predictions = forecast.iloc[-len(df_test):]["yhat"].reset_index(drop=True)
+    actuals = df_test["y"].reset_index(drop=True)
     rms_error = round(rmse(predictions, actuals), 4)
     print("RMSE:", rms_error)
 
@@ -113,12 +133,14 @@ def make_experiment_forecast(query):
     visualize_prophet(model, forecast, xlabel, ylabel)
 
     # Walidacja krzyżowa
+    '''
     model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
                     seasonality_mode="additive")
     model.fit(df_without_outliers)
     df_cv, df_metrics = model_cross_validation(model, test_period=365, training_period=2, period=0.1)
     print(df_cv.head)
     print(df_metrics)
+    '''
 
 
 """Uruchamianie eksperymentów"""
