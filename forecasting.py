@@ -13,7 +13,7 @@ __copyright__ = "Katedra Informatyki"
 __version__ = "1.6.0"
 
 from data.mining.predictive import *
-from data.datasources import *
+from data.datasources import connect
 from prophet import Prophet
 from scipy import stats
 from statsmodels.tools.eval_measures import rmse
@@ -24,19 +24,20 @@ import datetime as dt
 import warnings
 import os
 
-"""Zapytanie do analizy wolumenu tj. liczby sprzedaży wg dat"""
+"""Zapytanie do analizy wolumenu sprzedaży tj. liczby wg dat"""
 sales_volumen_by_date_query = "SELECT data, liczba " \
-                              "FROM poczta_olap.sprzedaz_wg_dni_v";
+                              "FROM poczta_olap.sprzedaz_wg_dni_v " \
+                              "WHERE data BETWEEN '2010-01-01' AND CURRENT_DATE";
 
 """Zapytanie do analizy wartości sprzedaży wg dat"""
 sales_value_by_date_query = "SELECT data, wartosc " \
-                            "FROM poczta_olap.sprzedaz_wg_dni_v";
+                            "FROM poczta_olap.sprzedaz_wg_dni_v " \
+                            "WHERE data BETWEEN '2010-01-01' AND CURRENT_DATE";
 
-"""Zapytanie do analizy wolumenu tj. liczby sprzedaży wg dat filtrowane wg regionów"""
+"""Zapytanie do analizy wolumenu sprzedaży tj. liczby wg dat filtrowane wg regionów"""
 sales_volumen_by_date_filtered_by_region_query = "SELECT data, liczba " \
                                                  "FROM poczta_olap.sprzedaz_wg_dni_regionow_v " \
-                                                 "WHERE region = 'dolnośląskie'";
-
+                                                 "WHERE region IN ('dolnośląskie')";
 
 def make_experiment_forecast(query):
     """Eksperyment prognozowania"""
@@ -45,10 +46,11 @@ def make_experiment_forecast(query):
     rs = connect(query)
 
     # Utworzenie ramki danych
-    # Wymagane jest aby ramka danych składała się z dwóch kolumn ds oraz y.
+    # Wymagane jest aby ramka danych składała się obowiązkowo z kolumn ds oraz y.
     # Kolumna ds tj. datestamp winna być datą w formacie YYYY-MM-DD albo YYYY-MM-DD HH:MM:SS.
     # Kolumna y winna być liczbą.
     df = pd.DataFrame(rs, columns=["ds", "y"])
+    # Powiększenie ramki danych o dodatkową kolumnę regressor.
     df["regressor"] = None
     print(f"Rozmiar zbioru OBSERWACJI: {len(df)}")
     print(df, os.linesep)
@@ -59,7 +61,7 @@ def make_experiment_forecast(query):
     ylabel = "Wolumen/Wartość usług"
     title = "Sprzedaż usług"
 
-    # Wizualizacja zbioru danych
+    # Wizualizacja zbioru danych wtkresem PUNKTOWYM oraz LINIOWYM
     visualize_scatter(x=df[x], y=df[y], title=title, xlabel=xlabel, ylabel=ylabel)
     visualize_plot(x=df[x], y=df[y], title=title, xlabel=xlabel, ylabel=ylabel)
 
@@ -73,6 +75,7 @@ def make_experiment_forecast(query):
     for i in range(0, len(df) - window_size + 1, 1):
         df_window = df.iloc[i:i + window_size]
         df_outliers = pd.concat([df_outliers, df_window[(np.abs(stats.zscore(df_window[y])) >= sd_count)]], ignore_index=True).drop_duplicates(keep=False)
+
     print(f"Rozmiar zbioru OBSERWACJI ODSTAJĄCYCH: {len(df_outliers)}")
     print("df_outliers: ", df_outliers, os.linesep)
 
@@ -133,14 +136,12 @@ def make_experiment_forecast(query):
     visualize_prophet(model, forecast, xlabel, ylabel)
 
     # Walidacja krzyżowa
-    '''
     model = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
                     seasonality_mode="additive")
     model.fit(df_without_outliers)
     df_cv, df_metrics = model_cross_validation(model, test_period=365, training_period=2, period=0.1)
     print(df_cv.head)
     print(df_metrics)
-    '''
 
 
 """Uruchamianie eksperymentów"""
@@ -150,3 +151,6 @@ make_experiment_forecast(sales_volumen_by_date_query)
 
 """Analiza wg wartości sprzedaży"""
 # make_experiment_forecast(sales_value_by_date_query)
+
+"""Analiza wg wolumenu sprzedaży dla określonego regionu/regionów"""
+# make_experiment_forecast(sales_volumen_by_date_filtered_by_region_query)
